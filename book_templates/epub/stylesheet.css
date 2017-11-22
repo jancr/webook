@@ -1,0 +1,21 @@
+
+body {
+	font-size:11.0pt;
+	font-family:"Garamond", "serif";
+}
+
+h2 {
+	margin-bottom: 2.45pt;
+	font-size:24.0pt;
+}
+
+h3 {
+	margin-bottom: 2.45pt;
+	font-size:18.0pt;
+}
+
+p {
+	margin: 0cm 0cm 2.2pt 8.65pt;
+   	text-indent: -8.65pt;
+	font-size:12.0pt;
+}
