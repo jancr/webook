@@ -1,4 +1,8 @@
 
-.pyc
-.pdf
-.epub
+*.pyc
+*.pdf
+*.epub
+
+/dist/
+
+/*.egg-info

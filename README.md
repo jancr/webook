@@ -2,8 +2,16 @@
 framework for parsing a webpage into an ePUB
 
 
+## Install Instructions ##
+
+```
+git clone https://github.com/jancr/webook.git
+cd webook
+pip3 install setup.py
+```
+
 ## Dependencies ##
-### General Dependencies ###
+Dependencies are installed by setup.py
 
 **[Python 3](https://www.python.org/downloads/) and packages**
 
@@ -11,17 +19,11 @@ framework for parsing a webpage into an ePUB
 
    * `pip3 install beautifulsoup4`
 
-### Webserver Dependencies ###
-
-This part of the project has not been implemented yet.
 
 **Flask**
+This part of the project has not been implemented yet.
 
 * `pip3 install flask`
-
-## Install Instructions ##
-
-`git clone https://github.com/jancr/webook.git`
 
 ## How To Use ##
 
