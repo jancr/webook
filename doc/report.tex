@@ -1,0 +1,434 @@
+\documentclass[]{report}   % list options between brackets
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset
+{ %Formatting for code in appendix
+    %basicstyle=\footnotesize,
+    % line number stuff
+    numbers=left,
+    stepnumber=1,
+    xleftmargin=4.0ex,
+    showstringspaces=false,
+    tabsize=4,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
+\usepackage{textcomp}
+\lstset{basicstyle=\ttfamily,
+  showstringspaces=false,
+  commentstyle=\color{red},
+  keywordstyle=\color{blue}
+}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+ 
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+ 
+\usepackage{courier}
+% type user-defined commands here
+
+
+\definecolor{titlebgdark}{RGB}{0,163,243}
+\definecolor{titlebglight}{RGB}{191,233,251}
+
+%\usepackage{mystyle} % Nannas hacks
+\begin{document}
+					
+\lstset{language=Python,upquote=true}
+
+\title{WeBook: scrape Webpage to Ebook}
+\author{Jan Christian Refsgaard}
+\date{December 20, 2017}    % type date between braces
+\maketitle
+
+%-------------------------------------------------------------------------------
+% ABBREVIATIONS
+%-------------------------------------------------------------------------------
+\section*{Abbreviations}
+\begin{tabular}{ l l }
+	% TODO: remember to sort them !!!!
+	% TODO: remember to sort them !!!!
+	\textbf{URI}   & \textbf{U}niform \textbf{R}esource \textbf{I}dentifier \\
+	\textbf{URL}   & \textbf{U}niform \textbf{R}esource \textbf{L}ocator \\
+	\textbf{EPUB}  & \textbf{E}lectronic \textbf{PUB}lication  \\
+	\textbf{HTML}  & \textbf{H}yper\textbf{T}ext \textbf{M}arkup \textbf{l}anguage \\
+	\textbf{XHTML} & \textbf{E}xtensible \textbf{H}yper\textbf{T}ext 
+					 \textbf{M}arkup \textbf{l}anguage \\
+	\textbf{HTML5} & \textbf{H}yper\textbf{T}ext \textbf{M}arkup \textbf{l}anguage 
+					 version 5 \\
+	\textbf{OEBPS} & \textbf{O}pen \textbf{EB}ook \textbf{P}ublication \textbf{S}tructure \\
+\end{tabular}
+
+%-------------------------------------------------------------------------------
+% INTRODUCTION
+%-------------------------------------------------------------------------------
+\chapter{Introduction}           
+Many aspiring authors publish their work on as a wordpress wordpress blog, two
+of my favorite books are only available this way:
+\begin{itemize}
+    \item Worm: \url{parahumans.wordpress.com/}.
+    \item From The New World: \url{shinsekai.cadet-nine.org/} 
+\end{itemize}
+There are other webpages such as \url{fanfiction.net} where users have uploaded millions of books.
+
+Because the above books are only available as websites they cannot be consumed
+from an e-book reader. Nor can they be enjoyed when internet is unavailable such
+as on an air plane.
+
+\section{Problem Statement}
+How can a website be converted to an e-book?
+
+This question can be further broken down to:
+\begin{itemize}
+    \item how do you scrape a website
+    \begin{itemize}
+        \item do you have to write a scraper for each website, or can the software be made more generic?
+    \end{itemize}
+    \item which e-book format resemble a website most?
+    \item should the software support multiple e-book formats?
+    \item How do we make the tool user friendly.
+\end{itemize}
+
+\subsection{Scope}
+Many e-book format exists, but EPUP is based on html, and therefore the easiest
+to support when the source book is also HTML. I will not support other formats
+as Calibre \url{https://calibre-ebook.com/}, support conversion between most
+e-book formats.
+
+As there are a plethora of different webpage books, that all will be needed to
+be converted to EPUP, I will only write a scraper for \url{fanfiction.net}, but
+strive to make the code modular so it is easy for tech savvy users to write a
+parser, to further facilitate the expansion of the tool, the code is available
+on github under \url{https://github.com/jancr/webook} under the MIT licence. 
+
+To make the tool available I will make a website, as well as a command-line
+interface.
+
+My Hope is for my tool to be used by other readers and programmers. Thus to
+make installation as easy as possible I will strive to mostly use functions
+from Pythons standard library.
+
+%\subsection{Methods}
+
+%-------------------------------------------------------------------------------
+% THEORY
+%-------------------------------------------------------------------------------
+\chapter{Theory}
+\section{Electronic Publication (EPUB)}
+\subsection{EPUB History}
+EPUB is the successor of the Open eBook Publication Structure (OEBPS) version
+1.2. For this reason the first version of ePub, version 2.0, was released in
+2007. In 2010 it reached maturity and the final specification EPUB 2.0.1 was
+releasesd \ref{epub201}. This promptet the development of version 3 where there
+is still active development\ref{epub301}. The Difference between the 2.0 and
+3.0 mostly new features such as support for mathML and support for Fixed Layout Documents such as comments\ref{epub2to3}. Also version 2.0 uses XHTML where version 3.0 supports both XHTML and HTML5.EPUB 3.0.1 is mostly backwards compatible with 2.0.1\ref{epub2to3}. 
+
+\subsection{Implementation}
+As many e-eook readers have different screen sizes, the standard has opted to
+use HTML + css, to facilitate reflowable documents.
+
+An EPUB is basically a website, contained in a ZIP archive. To see this lets download a public domain book (note I am using the back tick hack to split the url over multiple lines):
+
+\begin{lstlisting}[language=bash]
+wget "https://s3-us-west-2.amazonaws.com/"`
+     `"pressbooks-samplefiles/MetamorphosisJacksonTheme/"`
+     `"Metamorphosis-jackson.epub"
+unzip Metamorphosis-jackson.epub
+\end{lstlisting}
+
+Which yields the following output:
+
+\begin{lstlisting}[language=bash]
+Archive:  Metamorphosis-jackson.epub
+ extracting: mimetype
+  inflating: toc.ncx
+  inflating: OEBPS/chapter-001-chapter-i.html
+            ...
+  inflating: OEBPS/jackson.css
+  inflating: book.opf
+  inflating: META-INF/container.xml
+  inflating: META-INF/com.apple.ibooks.display-options.xml
+\end{lstlisting}
+% removed from ...
+  % inflating: OEBPS/chapter-002-chapter-ii.html
+  % inflating: OEBPS/title-page.html
+  % inflating: OEBPS/front-cover.html
+  % inflating: OEBPS/chapter-003-chapter-iii.html
+  % inflating: OEBPS/copyright.html
+  % inflating: OEBPS/table-of-contents.html
+  % inflating: OEBPS/assets/pressbooks-promo.png
+  % inflating: OEBPS/assets/MedulaOne-Regular.ttf
+  % inflating: OEBPS/assets/themetamorphosis_1200x1600.jpg
+  % inflating: OEBPS/pressbooks-promo.html
+
+We see above that the website aspects of the e-book is located in the folder
+\texttt{OEBPS}, while this is not mandatory, it is common practice, the folder
+is named \texttt{OEBPS} because that is the predecessor to EPUB.
+
+Apart from the website aspects of \texttt{Metamorphosis-jackson.epub} there
+three other files mandated by the EPUB standard\ref{epub301}:
+\begin{itemize}
+    \item \texttt{META-INF/container.xml} This XML file points to the file OPF file(s)
+    \item \texttt{book.opf}: Open Package Format (URI:
+          \url{http://www.idpf.org/2007/opf}), a file containing meta data, such as
+          author name, and a manifest indexing the books content, in this case all
+          the files in OEBPS)
+    \item \texttt{toc.ncx} The table of context, an XML file (URI:
+          \url{http://www.daisy.org/z3986/2005/ncx/}.
+\end{itemize}
+
+\section{Python 3}
+\subsection{Quick Python Intro for Programmers}
+Python is one of the easiest languages to learn. The standard hello world is only one line:
+\begin{lstlisting}[language=python]
+print("hello world")
+\end{lstlisting}
+
+Python uses whitespace to signify end of code block, thus all code that have the same indentation are in the same block. This avoids the dangling else problem\ref{dangling_else}:
+
+\begin{lstlisting}[language=python]
+y = x = 2
+if y == 3:
+    if x == 3:
+        print('x is 3')
+else:  # the else belongs to the if with the same indentation
+    print('y is not 3')
+\end{lstlisting}
+
+% \begin{lstlisting}[language=c]
+% int y = 2
+% int y = 2
+% if (y == 3)
+    % if (x == 3)
+        % printf('yay')
+% else 
+    % printf('does this else belong to the y or x if statement??')
+% \end{lstlisting}
+% 
+Python 3 is under rapid development, and in version 3.6 f strings were
+introduced, allowing you to seamlessly intermingle code and strings, by
+prepending stings with an \textbf{\texttt{f}}, you can run arbitrary python
+code between \{ and \}:
+
+\begin{lstlisting}[language=python]
+x = 'hat,cat'
+print(my f"{x.split(',')[0]} is beautiful")
+# prints "my hat is beautifull"
+\end{lstlisting}
+
+For a more in depth tutorial the tutorial at \url{
+https://docs.python.org/3/tutorial/index.html} is excellent.
+
+%\subsection{OOP}
+\subsection{Web Scraping}
+Web scraping referes to the act of extracting data from a website, it can be
+done manually, but most often it is done programmically. As crawling a server
+risks overloading it, many pages have a file named
+\texttt{robots.txt}\ref{robots} that specifies, which parts of the site robots
+are allowed to scrape. Of course malicious bots does not have to respect the
+\texttt{robots.txt}.
+
+There are many different tools and libraries that can assist one. The most
+simple way to scrape a website is simply to make GET requests to web pages,
+find links, and then make GET requests to those. While this works wonders for
+static pages, it falls short on dynamic webpages. For very advanced web
+scraping libraries like Java's HtmlUnit, "a GUI less browser for Java
+Programs"\ref{java_htmlunit}" be used to scrape dynamic pages.
+
+\subsection{Flask}
+Flask is a microframework, it is thus very lightweight and ideal for small
+webpages. It builds upon two other python packages. 1. Werkzeug, a WSGI (Web
+Server Gateway Interface). 2) Jinja 2, a templating language that allows you to
+mix python and html, much like php. 3) 
+
+Much like python, hello world in Flask is also surprisingly few lines:
+
+\begin{lstlisting}[language=python]
+import flask
+app = flask.Flask(__name__)
+
+@app.route("/")
+def hello():
+    return "Hello World!"
+\end{lstlisting}
+
+\textbf{Line 1-2:} Imports Flask, and instanciates the WSGI server \\
+\textbf{Line 4:} this decorator assigns the '/' request (both GET and POST) to
+the function \texttt{hello} \\
+\textbf{Line 5-6:} a Python functio that returns "HTTP/1.1 200 OK" with "Hello
+World" as data \\
+
+If instead of returning plain text we want to return html, then we need two
+things, 1. we need the function \texttt{flask.render\_template}, that takes a Jinja 2 template as argument and processes it into html, 2. A Jinja 2 template
+
+\subsubsection{Jinja 2}
+The base idea of Jinja is that you create one base template, and extend it,
+data is passed to the template via \texttt{render\_template}. 
+
+
+\begin{lstlisting}[language=python]
+{% extends "layout.html" %}
+{% block body %}
+  <ul>
+  {% for user in users %}
+    <li><a href="{{ user.url }}">{{ user.username }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock %}
+\end{lstlisting}
+
+\textbf{Line 1:} This an extension of the template \texttt{layout.html} \\
+\textbf{Line 2 and 8:} The following code goes into the 'body' block of
+\texttt{layout.html} \\
+\textbf{Line 4-6:} python code is encapsulated in \texttt{\{\% \%\}} and python
+variables in \texttt{\{\{ \}\}}
+
+Assuming the above template is called \texttt{users.html} and you want to pass
+it the \texttt{user} variable, then render\_template would be called with two
+arguments, 1. The template (\texttt{users.html}, and 2. The user
+variable(\texttt{user})
+
+\begin{lstlisting}[language=python]
+@app.route("/users.html")
+def users():
+    return flask.render_templates('users.html', user=user)
+\end{lstlisting}
+
+
+
+
+%-------------------------------------------------------------------------------
+% WEBOOK 
+%-------------------------------------------------------------------------------
+\chapter{WeBook}
+
+\subsection{Design and Technology Choices}
+\subsubsection{E-book format}
+Because of EPUB 3.0.1 is mostly backwards compatible with EPUB
+2.0.1\ref{epub2to3} and because the EPUB 2.0.1 specification is simpler, I have
+opted for creating EPUB that conform to both standards. This is achieved by
+using XHTML instead of HTML5.
+
+\subsubsection{Python and Libraries}
+To keep the project simple, I have opted to use the same language (Python) for:
+scraping the webpages, creating the e-book, exposing the command line
+interface and creating web server.
+\textbf{E-Book generation:} As the EPUB is a mixture of xhtml and xml, a xml
+parsing library is needed. The two best candidates are \texttt{ElementTree}
+from the standard library or the extenal library \texttt{lxml}. They both have
+very similiar syntax, and \texttt{ElementTree} is basically a subset of
+\texttt{lxml}. I don't stricktly need any of the features from \texttt{lxml}
+though it's handling of name spaces is better than \texttt{ElementTree}, so to
+reduce the number of dependencies I have opted for \texttt{ElementTree}
+
+\textbf{scraping}. There are many good python libraries that can simplify the for web-scraping.
+\begin{itemize}
+    \item \textbf{\texttt{mechanize}:} Which has a very natural and powerful API
+    \item \textbf{\texttt{urllib}:} Part of the Python standard library, can make GET requests.
+    \item \textbf{\texttt{requests}:} One of the most popular Python libraries,
+        has better API than urllib, but is not part of the standard library
+    \item \textbf{\texttt{Beautiful Soup}:} Prominent html Parsing library
+\end{itemize}
+As I have a commitment to keeping the number of dependencies low I will parse
+urls and make requests using \texttt{urllib} from the standard library. But as
+many web pages can be malformed I need a mature library, that parses html much
+the same way as the browser, and have thus settled on \texttt{Beautiful Soup}.
+
+\section{Code and File Structure}
+\subsection{EPUB Files}
+The Base Idea is that for each book type, the base skeleton of will be available
+under \texttt{book\_templates}, for now only epub is available. 
+
+\begin{lstlisting}[language=bash]
+\begin{verbatim}
+$ ls -lh book_templates/epub/*
+-rwxr-xr-x  1 jcr  staff   934B Nov 22 12:23 content.opf
+-rwxr-xr-x@ 1 jcr  staff    20B Jun  4 23:19 mimetype
+-rwxr-xr-x@ 1 jcr  staff    50B Jun  4 23:19 page_style.css
+-rwxr-xr-x@ 1 jcr  staff   404B Jun  4 23:19 page_template.xhtml
+-rwxr-xr-x@ 1 jcr  staff   670B Jun  4 23:19 titlepage.xhtml
+-rwxr-xr-x  1 jcr  staff   578B Nov 22 17:40 toc.ncx
+
+META-INF:
+-rwxr-xr-x@ 1 jcr  staff   225B Nov 22 19:06 container.xml
+\end{verbatim}
+\end{lstlisting}
+
+\subsection{Static Files}
+Here I will describe all the files that are hard coded, and thus not changed by the code.
+
+\texttt{mimetype} specifies the EPUP mimetype (\texttt{application/epub+zip}).
+\texttt{META-INF/container.xml} points out where the root file is located, it
+is hard coded to point to \texttt{content.opf}. \texttt{page\_style.css}
+contains the css to style the book. While I could allow the parser to also
+scrape style sheets, I think it is better to hard code it as some pages may
+have the style sheet cascade in such a way that they are not applied correctly,
+when only a small portion of the web page is scraped.
+
+\subsubsection{XHTML Files}
+%TODO:
+
+\subsubsection{content.opf}
+The \texttt{content.opf} is an xml file with two important tags
+\begin{itemize}
+    \item \texttt{<metadata>}, such as cover image, author name and book title.
+    \item \texttt{<manifest>}, a reference to every file that needs to be
+        indexed, it is hard coded to have references to \texttt{titlepage.xhtml}, \texttt{page\_style.css} and \texttt{toc.ncx}. Each chapter scraped should result in an xhtml file with an entry here.
+\end{itemize}
+
+\subsubsection{toc.ncx}
+%TODO:
+
+
+\texttt{page\_style.css} are small files that will not be touched by the code as they 
+
+
+
+
+
+`webook/webook.py` contains the heart of the project. It contains the class `EBook`
+which contains all the code necessary for creating an ebook. It has a fairly
+simple API, In order to make it work, one must subclass it and 'teach' it to
+parse your favorite websites. This is done by overwriting the abstract `parse` method in
+the child classes, and by calling `update` for each chapter/section of the
+book.
+
+While it may sound very scary to subclass EBook, the parser for parsing
+`www.fanfiction.net/` (`FanFictionEBook`) is less than 30 lines of code. To
+read the code for inspiration, see `webook/modules/fanfiction.py`
+
+
+\subsection{webserver}
+\subsection{webscraping}
+\subsection{modules}
+
+%-------------------------------------------------------------------------------
+% CONCLUSION
+%-------------------------------------------------------------------------------
+\chapter{Conclusion}
+
+
+\begin{thebibliography}{9}
+  % type bibliography here
+\end{thebibliography}
+
+\end{document}
+
+%bibliography 
+% epub http://idpf.org/epub
+% epub201 http://idpf.org/epub/201
+% epub301 http://idpf.org/epub/301
+% epub2to3 http://www.idpf.org/epub/30/spec/epub30-changes.html
+% dangling_else https://en.wikipedia.org/wiki/Dangling_else 
+% robots http://www.robotstxt.org/robotstxt.html
+% py_mechanize % https://pypi.python.org/pypi/mechanize/
+% java_htmlunit http://htmlunit.sourceforge.net/
+% worm https://parahumans.wordpress.com/
+% flask http://flask.pocoo.org/ 

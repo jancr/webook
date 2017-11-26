@@ -38,7 +38,7 @@ as a Flask web App
 webook --webserver
 ```
 
-Point browser to http://localhost:8888
+Point browser to http://localhost:5555 or 0.0.0.0:5555
 
 ### Comand-line ###
 
