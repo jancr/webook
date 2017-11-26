@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block head %}
+    <script type="text/javascript" src="{{url_for('static', filename='webook.js')}}"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            load_index_page();
+        });
+    </script>
+{% endblock head %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <form id="ebook_form" action="/ebook">
+        <div class="col-md-12">
+            <h3>WeBook - Webpage to E-book parser</h3>
+            <p>WeBook is a libarary that can scrape a webpage, such as fanfiction.com and turn it into an EPUB file</p>
+            <div class="row">
+                <div class="form-group col-md-8">
+                    <label for="url">url to scrape</label>
+                    <input class="form-control" id="url" name="url" placeholder="http://website.com/book/path">
+                    <small id="url_examples" name="url_examples" class="form-text text-muted">
+                        This is an example of a valid url/book:
+                        <a href="https://www.fanfiction.net/s/10360716/1/The-Metropolitan-Man">
+                            https://www.fanfiction.net/s/10360716/1/The-Metropolitan-Man
+                        </a> 
+                    </small>
+                </div>
+                <div class="form-group col-md-4">
+                      <label for="parser">Parser: </label>
+                      <select class="form-control" id="parser" name="parser">
+                          <option value="auto detect">auto detect</option>
+                          {% for parser in parsers %}
+                          <option value="{{loop.index0}}">{{parser}}</option>
+                          {% endfor %}
+                      </select>
+                </div>
+                <!-- <div class="form-group col-md-4"> -->
+                    <!-- <label for="file_name">File Name</label> -->
+                    <!-- <input class="form-control" id="file_name" name="file_name" placeholder="file_name"> -->
+                    <!-- <small id="file_explanation" name="file_explanation" class="form-text text-muted"> -->
+                        <!-- File name without extension, 'time' will result in a file called time.epub -->
+                    <!-- </small> -->
+                <!-- </div> -->
+                <!-- </span> -->
+            </div>
+            <div class="row">
+                <div class='col-md-6'>
+                    <p class='bs-component'>
+                        <button id="submit" name="submit" class="btn btn-primary" type="submit">Make E-Book</button>
+                        <button id="example" name="example" class="btn btn-secondary" type="button">Example</button>
+                    </p>
+                </div>
+            </div>
+    </form>
+</div>  <!-- /container -->
+    
+{% endblock content %}

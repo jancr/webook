@@ -21,7 +21,6 @@ Dependencies are installed by setup.py
 
 
 **Flask**
-This part of the project has not been implemented yet.
 
 * `pip3 install flask`
 
@@ -35,11 +34,8 @@ as a Flask web App
 
 ### Flask Webserver ###
 
-TODO: These instructions are bogus as there is no Web App yet. Remember to update!
-
 ```
-cd webook
-python run_webapp.py -p 8888
+webook --webserver
 ```
 
 Point browser to http://localhost:8888
@@ -47,13 +43,25 @@ Point browser to http://localhost:8888
 ### Comand-line ###
 
 ```
-python3 parse_ebook.py website [book_title] [--title]
+$ webook -h
+usage: webook [-h] [--title TITLE] url book_file
+
+positional arguments:
+  url            url to where the book is located, fx
+                 https://www.fanfiction.net/s/9658524/1/Branches-on-the-Tree-
+                 of-Time
+  book_file      the file name of final book
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --title TITLE  The title of the book, default name is scraped from the
+                 website
 ```
 
 Example:
 
 ```
-python3 parse_ebook.py www.fanfiction.net/s/9658524/1/Branches-on-the-Tree-of-Time \ 
+webook www.fanfiction.net/s/9658524/1/Branches-on-the-Tree-of-Time \ 
 		time.epub
 ````
 
