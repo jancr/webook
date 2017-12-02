@@ -34,48 +34,60 @@ class EBook:
     """An ebook basically consists of a bunsh of html files usually one pr chapter
     and a table of content that describes the relationship between the chapters"""
 
-    def __init__(self, url, epup_file='book.epup', title=None):
+    def __init__(self, url, epub_file='book.epup', title=None, 
+            workers=5, progress_bar=True, run=True):
         if not url.startswith('http'):
             url = f'http://{url}'
+
+        self.url = url
+        self.epub_file = epub_file
+        self.input_title = title
+        self.workers = workers
+        self.progress_bar = progress_bar
+
         self.toc_dict = {}
-        with tempfile.TemporaryDirectory() as self.output_dir:
-            copy_tree(pjoin(self.TEMPLATE_FOLDER), self.output_dir)
+        self.output_dir_obj = tempfile.TemporaryDirectory()
+        self.output_dir = self.output_dir_obj.name
+        copy_tree(pjoin(self.TEMPLATE_FOLDER), self.output_dir)
 
-            self.ns = 'http://www.daisy.org/z3986/2005/ncx/'
-            ET.register_namespace('', self.ns)
-            self.toc_path = self.get_path("toc.ncx")
-            self.toc = ET.parse(open(self.toc_path)).getroot()
-            # self.nav_point_root = self.toc.find(f'{{{self.ns}}}navMap/{{{self.ns}}}navPoint')
-            self.nav_point_root = self.toc.find(f'{{{self.ns}}}navMap')
-            self.current_nav_point = self.nav_point_root
-            self.play_order = 1
+        self.ns = 'http://www.daisy.org/z3986/2005/ncx/'
+        ET.register_namespace('', self.ns)
+        self.toc_path = self.get_path("toc.ncx")
+        self.toc = ET.parse(open(self.toc_path)).getroot()
+        # self.nav_point_root = self.toc.find(f'{{{self.ns}}}navMap/{{{self.ns}}}navPoint')
+        self.nav_point_root = self.toc.find(f'{{{self.ns}}}navMap')
+        self.current_nav_point = self.nav_point_root
+        self.play_order = 1
 
-            self.content_path = self.get_path("content.opf")
-            self.content = Soup(open(self.content_path), 'html.parser')
-            self.content_manifest_tag = self.content.find('manifest')
-            self.content_spine_tag = self.content.find('spine')
+        self.content_path = self.get_path("content.opf")
+        self.content = Soup(open(self.content_path), 'html.parser')
+        self.content_manifest_tag = self.content.find('manifest')
+        self.content_spine_tag = self.content.find('spine')
 
-            ## TODO: parse notes and other optional stuff
-            # variables expected to be scraped by self.scrape
-            self.title = None
-            self.first_name = None
-            self.last_name = None
-            self.cover_path = None
+        ## TODO: parse notes and other optional stuff
+        # variables expected to be scraped by self.scrape
+        self.title = None
+        self.first_name = None
+        self.last_name = None
+        self.cover_path = None
 
-            # self.update('titlepage', self.title)
-            self.scrape(url)
+        # self.update('titlepage', self.title)
+        if run:
+            for progress in self.run():
+                pass
+            
+    def run(self):
+        scrape = self.scrape(self.url, self.workers)
+        for progress in scrape:
+            yield progress
 
-            if self.first_name:
-                self.update_author(self.first_name, self.last_name)
-
-            if title:
-                self.title = title
-            self.update_title(self.title)
-
-            self.add_cover(self.cover_path)
-
-            self.save(epup_file)
-
+        if self.first_name:
+            self.update_author(self.first_name, self.last_name)
+        if self.input_title:  # user specified title > scraped title
+            self.title = self.input_title
+        self.update_title(self.title)
+        self.add_cover(self.cover_path)
+        self.save(self.epub_file)
 
     def update_title(self, title):
         self.toc.find(f'{{{self.ns}}}docTitle/{{{self.ns}}}text').text = title
@@ -135,6 +147,7 @@ class EBook:
         tmp_file_name = str(uuid.uuid4())[:10]
         shutil.make_archive(tmp_file_name, 'zip', self.output_dir)
         os.rename(f'{tmp_file_name}.zip', epup_file)
+        self.output_dir_obj.cleanup()  # remove temporary directory
 
     def get_path(self, *path):
         return pjoin(self.output_dir, *path)
@@ -147,26 +160,30 @@ class EBook:
             _tag.string = text
         target.append(_tag)
 
-    def write_chapter(self, chapter_tags, n_chapter, chapter_name=None):
-        if chapter_name is None:
-            chapter_name = f"Chapter {n_chapter}"
-        chapter_file = open(self.get_path(f'chapter_{n_chapter}.xhtml'), 'w')
+    def write_html(self, text, file_name, header=None):
+        if header is None:
+            header = file_name
+        chapter_file = open(self.get_path(f'{file_name}.xhtml'), 'w')
 
         chapter_soup = Soup(open(self.get_path('page_template.xhtml')), 'lxml')
         body_tag = chapter_soup.find('body')
-        self._append_soup_tag(body_tag, "h3", chapter_name)
-        if isinstance(chapter_tags, str):
-            body_tag.append(soup.new_tag('div', chapter_tags))
-        elif isinstance(chapter_tags, bs4.element.ResultSet):
-            for tag in chapter_tags:
+        self._append_soup_tag(body_tag, "h3", header)
+        if isinstance(text, str):
+            body_tag.append(soup.new_tag('div', text))
+        elif isinstance(text, bs4.element.ResultSet):
+            for tag in text:
                 body_tag.append(tag)
-        elif isinstance(chapter_tags, bs4.element.Tag):
-            body_tag.append(chapter_tags)
+        elif isinstance(text, bs4.element.Tag):
+            body_tag.append(text)
         else:
             raise ValueError("chapter_tag must be either string, bs4.element.Tag or bs4.element.ResultSet")
         chapter_file.write(chapter_soup.prettify())
-
-    # the parse functions arbstract functions, that needs to be in the subclass
-    def scrape(self, url):
+    
+    def scrape(self, url, workers, progress_bar):
+        """
+        the parse functions arbstract corotine , that needs to be in the subclass
+        it should set self.total before beeing primed and yeild 'the current'
+        progrees
+        """
         pass
 

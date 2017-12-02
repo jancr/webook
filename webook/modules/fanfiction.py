@@ -1,17 +1,23 @@
 
 # core imports
 import urllib
+import re
+from concurrent import futures
+from itertools import repeat
+
 
 # 3rd party imports
+import tqdm
 from bs4 import BeautifulSoup as Soup
 
 # local imports
 from ..webook import EBook
 
 class FanFictionEBook(EBook):
-    def scrape(self, url):
-        self._u = urllib.parse.urlparse(url)
-        print(f"Downloading: {url}")
+
+    def scrape(self, url, workers):
+        workers = 5
+        book_id = re.search('fanfiction\.net\/s\/(\d+)\/', url).groups()[0]
         page = Soup(urllib.request.urlopen(url), 'lxml')
 
         # add cover and title
@@ -23,22 +29,21 @@ class FanFictionEBook(EBook):
         self.first_name = title_page.find('a').text
         options = page.find('select', {'id': 'chap_select'}).find_all('option')
 
-        self.parse_chapter(page, options[0])
-        for option in options[1:]:
-            page = self.next_page(page)
-            self.parse_chapter(page, option)
+        url_chapters = range(1, len(options)+1)
+        self.total = len(url_chapters)
+        with futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            _exe = executor.map(self.parse_chapter, options, repeat(book_id), url_chapters)
+            # call chapter_name async, to download in paralell
+            for self.progress, (file_name, chapter_name) in enumerate(_exe, 1):
+                # update the TOC sequencial so the chapters are in order!
+                self.update(file_name, chapter_name)
+                yield self.progress
 
-    def parse_chapter(self, page, option):
+    def parse_chapter(self, option, book_id, n_page):
+        url = f"https://www.fanfiction.net/s/{book_id}/{n_page}"
+        page = Soup(urllib.request.urlopen(url), 'lxml')
         story_div = page.find('div', {'id': 'storytext'})
         n_chapter, chapter_name = option.text.split('. ')
-        self.write_chapter(story_div, n_chapter, chapter_name)
-        self.update(f'chapter_{n_chapter}', chapter_name)
-
-    def next_page(self, page):
-        next_chapter = page.find_all('button', {'class': 'btn', 'type': 'BUTTON'})[1]
-        url = next_chapter.attrs['onclick'].split("'")[1]
-        url = f'{self._u.scheme}://{self._u.netloc}{url}'
-        print(f"Downloading: {url}")
-        return Soup(urllib.request.urlopen(url), 'lxml')
-
-
+        file_name = f"chapter_{n_chapter}"
+        self.write_html(story_div, file_name, chapter_name)
+        return (file_name, chapter_name)
