@@ -12,7 +12,7 @@
 {% block content %}
 
 <div class="container-fluid">
-    <form id="ebook_form" action="/ebook">
+    <form id="ebook_form" action="/download_ebook">
         <div class="col-md-12">
             <h3>WeBook - Webpage to E-book parser</h3>
             <p>WeBook is a libarary that can scrape a webpage, such as fanfiction.com and turn it into an EPUB file</p>
@@ -50,6 +50,7 @@
                     <p class='bs-component'>
                         <button id="submit" name="submit" class="btn btn-primary" type="button">Make E-Book</button>
                         <button id="example" name="example" class="btn btn-secondary" type="button">Example</button>
+                        <button style="display: none" id="real_submit" name="real_submit" class="btn btn-primary" type="submit">Make E-Book</button>
                     </p>
                 </div>
             </div>

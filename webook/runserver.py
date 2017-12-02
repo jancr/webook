@@ -47,9 +47,16 @@ def get_parser(parser_option, url):
         return PARSER_MAPPERS[PARSERS[parser_key]]
 
 
-#  def ebook_wrapper(ebook, *args, **kwargs):
-    #  pass
-#  
+def cleanup():
+    keep = PROCESSES * 2 + 5
+    tmp_files = [pjoin(TMP_DIR, f) for f in os.listdir(TMP_DIR) if f.endswith('epub')]
+    tmp_files.sort(key=os.path.getctime, reverse=True)
+    for old_tmp_file in tmp_files[keep:]:
+        try:
+            os.unlink(old_tmp_file)
+        except:  # if another process deleted it
+            pass
+
 
 ################################################################################
 # html
@@ -59,7 +66,6 @@ def index():
     return render_template('index.html', parsers=PARSERS)
 
 
-#  @app.route('/download_ebook/<file_name>')
 @app.route('/download_ebook/<file_name>')
 def download_ebook(file_name):
     """This function is called after progress, it simply returns 
@@ -68,19 +74,14 @@ def download_ebook(file_name):
 
     @after_this_request
     def remove_file(response):
-        #  os.unlink(tmp_file_name)
+        cleanup()
         return response
 
     tmp_file_name = pjoin(TMP_DIR, file_name)
-    print('\n==============')
-    print(tmp_file_name)
-    print('\n==============')
 
-    #  return flask.send_from_directory(TMP_DIR, tmp_file_name)
-    return send_file(tmp_file_name, mimetype='application/epub+zip')
-                     
-    #  return send_file(tmp_file_name, mimetype='application/epub+zip',
-                     #  attachment_filename="book.epub", as_attachment=True)
+    return send_file(tmp_file_name, mimetype='application/epub+zip',
+                     attachment_filename="book.epub", as_attachment=True)
+
 
 @app.route('/create_ebook/<parser>/<url>')
 def create_ebook(parser, url):
@@ -94,7 +95,6 @@ def create_ebook(parser, url):
         total = ebook_parser.total
         yield f"data: {round(100 * progress / total)}\n\n"
         for progress in ebook_generator:
-            print(progress, total)
             yield f"data: {round(100 * progress / total)}\n\n"
         # hack: return file name for the next request
         tmp_file = os.path.basename(tmp_file)
@@ -103,20 +103,19 @@ def create_ebook(parser, url):
     book_parser = base64.b64decode(parser).decode('utf-8')
     book_url = base64.b64decode(url).decode('utf-8')
 
-    #  tmp_file = tempfile.NamedTemporaryFile(dir=TMP_DIR, suffix='.epub')
     tmp_file = tempfile.mkstemp(dir=TMP_DIR, suffix='.epub')[1]
     ebook_parser = get_parser(book_parser, url)
-    # todo, reduce number, this is a speed hack!!!
-    #  ebook_parser = ebook_parser(book_url, tmp_file, run=False, workers=20)
     ebook_parser = ebook_parser(book_url, tmp_file, run=False)
-    print(f' == {tmp_file} == ')
     return Response(generate(ebook_parser, tmp_file), mimetype='text/event-stream')
+
 
 def runserver(debugging=False, processes=4):
     global DEBUGGING
-    DEBUGGING = debugging
+    global PROCESSES
     if debugging:
         processes=1
+    PROCESSES=processes
+    DEBUGGING = debugging
     app.run(debug=debugging, host='0.0.0.0', port=5555, processes=processes)
 
 

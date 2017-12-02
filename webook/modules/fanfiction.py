@@ -27,17 +27,25 @@ class FanFictionEBook(EBook):
         # self.cover_path = 'https:{}'.format(page.find('img').attrs['data-original'])
         self.title = title_page.find('b').text
         self.first_name = title_page.find('a').text
-        options = page.find('select', {'id': 'chap_select'}).find_all('option')
 
-        url_chapters = range(1, len(options)+1)
-        self.total = len(url_chapters)
-        with futures.ThreadPoolExecutor(max_workers=workers) as executor:
-            _exe = executor.map(self.parse_chapter, options, repeat(book_id), url_chapters)
-            # call chapter_name async, to download in paralell
-            for self.progress, (file_name, chapter_name) in enumerate(_exe, 1):
-                # update the TOC sequencial so the chapters are in order!
-                self.update(file_name, chapter_name)
-                yield self.progress
+        select = page.find('select', {'id': 'chap_select'})
+        if select is not None:  # there are more than 1 chapter
+            options = select.find_all('option')
+            url_chapters = range(1, len(options)+1)
+            self.total = len(url_chapters)
+            with futures.ThreadPoolExecutor(max_workers=workers) as executor:
+                _exe = executor.map(self.parse_chapter, options, repeat(book_id), url_chapters)
+                for self.progress, (file_name, chapter_name) in enumerate(_exe, 1):
+                    # update the TOC sequencial so the chapters are in order!
+                    self.update(file_name, chapter_name)
+                    yield self.progress
+        else:  # there is only one chapter
+            self.total = 1
+            story_div = page.find('div', {'id': 'storytext'})
+            self.write_html(story_div, 'short_story', self.title)
+            self.update('short_story', self.title)
+            yield 1
+
 
     def parse_chapter(self, option, book_id, n_page):
         url = f"https://www.fanfiction.net/s/{book_id}/{n_page}"
