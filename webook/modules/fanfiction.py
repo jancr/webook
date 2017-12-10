@@ -16,7 +16,6 @@ from ..webook import EBook
 class FanFictionEBook(EBook):
 
     def scrape(self, url, workers):
-        workers = 5
         book_id = re.search('fanfiction\.net\/s\/(\d+)\/', url).groups()[0]
         page = Soup(urllib.request.urlopen(url), 'lxml')
 

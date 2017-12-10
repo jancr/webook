@@ -35,7 +35,7 @@ class EBook:
     and a table of content that describes the relationship between the chapters"""
 
     def __init__(self, url, epub_file='book.epup', title=None, 
-            workers=5, progress_bar=True, run=True):
+            workers=5, run=True):
         if not url.startswith('http'):
             url = f'http://{url}'
 
@@ -43,7 +43,6 @@ class EBook:
         self.epub_file = epub_file
         self.input_title = title
         self.workers = workers
-        self.progress_bar = progress_bar
 
         self.toc_dict = {}
         self.output_dir_obj = tempfile.TemporaryDirectory()
@@ -109,28 +108,6 @@ class EBook:
             cover_path = 'https://vignette.wikia.nocookie.net/uncyclopedia/images/c/cf/Trollface.jpg'
         urllib.request.urlretrieve(cover_path, self.get_path('cover.jpg'))
 
-    def update(self, name, heading, parent=None):
-        """ updates content and table of content, needs to be called
-        by scrape to add chapters, sections ect. to TOC
-        """
-        # if parent=None, then use last parent
-        if parent is not None:
-            self.current_nav_point = parent
-
-        # update table of content
-        self.play_order += 1
-        args = {"id" : f"navPoint-{self.play_order}", "playOrder" : str(self.play_order)}
-        elm = ET.SubElement(self.current_nav_point, "navPoint", **args)
-        nav_label = ET.SubElement(elm, "navLabel")
-        ET.SubElement(nav_label, "text").text = heading
-        ET.SubElement(elm, "content", src="{}.xhtml".format(name))
-        self.toc_dict[name] = elm
-
-        # update content
-        args={'href' : "{}.xhtml".format(name), 'id' : name, 'media-type' : "application/xhtml+xml"}
-        self._append_soup_tag(self.content_manifest_tag, "item", args=args)
-        self._append_soup_tag(self.content_spine_tag, 'itemref', args={'idref' : name})
-
     def save(self, epup_file):
         open(self.content_path, 'w').write(self.content.prettify())
         # et_to_file(self.toc, self.toc_path)
@@ -160,9 +137,39 @@ class EBook:
             _tag.string = text
         target.append(_tag)
 
-    def write_html(self, text, file_name, header=None):
+    def _update(self, name, heading, parent=None):
+        """ updates content and table of content, needs to be called by scrape
+        to add chapters, sections ect. to the Table of Content.
+        If a section should be nested below another section the 'name' from
+        previous evocations can be used
+        """
+        # if parent=None, then use last parent
+        if parent is not None:
+            if isinstance(parent, str):
+                parent = self.toc_dict[parent]
+            self.current_nav_point = parent
+
+        # update table of content
+        self.play_order += 1
+        args = {"id" : f"navPoint-{self.play_order}", "playOrder" : str(self.play_order)}
+        elm = ET.SubElement(self.current_nav_point, "navPoint", **args)
+        nav_label = ET.SubElement(elm, "navLabel")
+        ET.SubElement(nav_label, "text").text = heading
+        ET.SubElement(elm, "content", src="{}.xhtml".format(name))
+        self.toc_dict[name] = elm
+
+        # update content
+        args={'href' : "{}.xhtml".format(name), 'id' : name, 'media-type' : "application/xhtml+xml"}
+        self._append_soup_tag(self.content_manifest_tag, "item", args=args)
+        self._append_soup_tag(self.content_spine_tag, 'itemref', args={'idref' : name})
+
+    def write_html(self, text, name, header=None):
+        """ method needs to be called by scrape each evocation creates a
+        '{name}.xhtml' file. 
+        """
+
         if header is None:
-            header = file_name
+            header = name
         chapter_file = open(self.get_path(f'{file_name}.xhtml'), 'w')
 
         chapter_soup = Soup(open(self.get_path('page_template.xhtml')), 'lxml')
@@ -179,7 +186,7 @@ class EBook:
             raise ValueError("chapter_tag must be either string, bs4.element.Tag or bs4.element.ResultSet")
         chapter_file.write(chapter_soup.prettify())
     
-    def scrape(self, url, workers, progress_bar):
+    def scrape(self, url, workers):
         """
         the parse functions arbstract corotine , that needs to be in the subclass
         it should set self.total before beeing primed and yeild 'the current'

@@ -54,7 +54,7 @@ def cleanup():
     for old_tmp_file in tmp_files[keep:]:
         try:
             os.unlink(old_tmp_file)
-        except:  # if another process deleted it
+        except FileNotFoundError:  # if another process deleted it
             pass
 
 
@@ -96,7 +96,6 @@ def create_ebook(parser, url):
         yield f"data: {round(100 * progress / total)}\n\n"
         for progress in ebook_generator:
             yield f"data: {round(100 * progress / total)}\n\n"
-        # hack: return file name for the next request
         tmp_file = os.path.basename(tmp_file)
         yield f"data: file-name: {tmp_file}\n\n"
 

@@ -39,9 +39,15 @@
 \definecolor{titlebglight}{RGB}{191,233,251}
 
 %\usepackage{mystyle} % Nannas hacks
+\usepackage{enumitem}
 \begin{document}
+\sloppy
+
 					
 \lstset{language=Python,upquote=true}
+\setlist[enumerate]{itemsep=0mm}
+\setlist[itemize]{itemsep=0mm}
+\setlength\parindent{0pt}
 
 \title{WeBook: scrape Webpage to Ebook}
 \author{Jan Christian Refsgaard}
@@ -242,6 +248,9 @@ static pages, it falls short on dynamic webpages. For very advanced web
 scraping libraries like Java's HtmlUnit, "a GUI less browser for Java
 Programs"\ref{java_htmlunit}" be used to scrape dynamic pages.
 
+Luckely \url{fanfiction.net} and similiar pages are not very dynamic, making
+the request functions from the python standard library sufficient.
+
 \subsection{Flask}
 Flask is a microframework, it is thus very lightweight and ideal for small
 webpages. It builds upon two other python packages. 1. Werkzeug, a WSGI (Web
@@ -302,6 +311,21 @@ def users():
 \end{lstlisting}
 
 
+\subsection{Concurrent Programming and parallelism}
+Concurrent programming and parallelism are two different strategies for
+speeding up code. An example of parallelism is multi threading or
+multiprocessing where a subset of the problem is handled to each given to a
+worker. If however the majority of time is spend doing computations but by
+waiting on blocking calls such as waiting for a HTTP request or IO on the file
+system, a substantial speed up can be achieved by scheduling other parts of the
+program to run while waiting.
+
+In Python multi threading will speed up blocking programs, but it will not
+speed up non blocking programs as only one thread can be scheduled to run
+inside the interpreter. In python 3.5 a new syntax (\texttt{asyng/await})
+became available for concurrent programming without threads, this is a very
+interesting development for the language, but as of writing this is only
+supported for HTTPS/DNS using external libraries such as \texttt{aiohttp}. 
 
 
 %-------------------------------------------------------------------------------
@@ -309,7 +333,7 @@ def users():
 %-------------------------------------------------------------------------------
 \chapter{WeBook}
 
-\subsection{Design and Technology Choices}
+\section{Design and Technology Choices}
 \subsubsection{E-book format}
 Because of EPUB 3.0.1 is mostly backwards compatible with EPUB
 2.0.1\ref{epub2to3} and because the EPUB 2.0.1 specification is simpler, I have
@@ -342,27 +366,25 @@ many web pages can be malformed I need a mature library, that parses html much
 the same way as the browser, and have thus settled on \texttt{Beautiful Soup}.
 
 \section{Code and File Structure}
-\subsection{EPUB Files}
-The Base Idea is that for each book type, the base skeleton of will be available
-under \texttt{book\_templates}, for now only epub is available. 
+%\subsection{EPUB Files}
+The base idea is that for each book type (EPUB, MOBI etc), the base skeleton will be available
+under \texttt{book\_templates}, for now only EPUB is available (\texttt{book\_templates\/epub\/}).
 
-\begin{lstlisting}[language=bash]
-\begin{verbatim}
-$ ls -lh book_templates/epub/*
--rwxr-xr-x  1 jcr  staff   934B Nov 22 12:23 content.opf
--rwxr-xr-x@ 1 jcr  staff    20B Jun  4 23:19 mimetype
--rwxr-xr-x@ 1 jcr  staff    50B Jun  4 23:19 page_style.css
--rwxr-xr-x@ 1 jcr  staff   404B Jun  4 23:19 page_template.xhtml
--rwxr-xr-x@ 1 jcr  staff   670B Jun  4 23:19 titlepage.xhtml
--rwxr-xr-x  1 jcr  staff   578B Nov 22 17:40 toc.ncx
-
-META-INF:
--rwxr-xr-x@ 1 jcr  staff   225B Nov 22 19:06 container.xml
-\end{verbatim}
-\end{lstlisting}
-
+% \begin{lstlisting}[language=bash,basicstyle=\small]
+% $ ls -lh book_templates/epub/*
+% -rwxr-xr-x  1 jcr  staff   934B Nov 22 12:23 content.opf
+% -rwxr-xr-x@ 1 jcr  staff    20B Jun  4 23:19 mimetype
+% -rwxr-xr-x@ 1 jcr  staff    50B Jun  4 23:19 page_style.css
+% -rwxr-xr-x@ 1 jcr  staff   404B Jun  4 23:19 page_template.xhtml
+% -rwxr-xr-x@ 1 jcr  staff   670B Jun  4 23:19 titlepage.xhtml
+% -rwxr-xr-x  1 jcr  staff   578B Nov 22 17:40 toc.ncx
+% 
+% META-INF:
+% -rwxr-xr-x@ 1 jcr  staff   225B Nov 22 19:06 container.xml
+% \end{lstlisting}
+% 
 \subsection{Static Files}
-Here I will describe all the files that are hard coded, and thus not changed by the code.
+Here I will describe all the files that are hard coded, and thus not changed by the code. 
 
 \texttt{mimetype} specifies the EPUP mimetype (\texttt{application/epub+zip}).
 \texttt{META-INF/container.xml} points out where the root file is located, it
@@ -373,7 +395,6 @@ have the style sheet cascade in such a way that they are not applied correctly,
 when only a small portion of the web page is scraped.
 
 \subsubsection{XHTML Files}
-%TODO:
 
 \subsubsection{content.opf}
 The \texttt{content.opf} is an xml file with two important tags
@@ -384,30 +405,166 @@ The \texttt{content.opf} is an xml file with two important tags
 \end{itemize}
 
 \subsubsection{toc.ncx}
-%TODO:
+Contains the Table of Content. This file contains two important tags: 
+1. \texttt{<docTitle>}: where you put the title of the book
+2. \texttt{<navMap>}, an xml structure that specifies the nesting of book sections and "read order" (\texttt{playOrder}). Here is the xml my tool generated for a simple 1 page story:
+
+\begin{lstlisting}[language=XML]
+<navMap>
+    <navPoint id="navPoint-1" playOrder="1">
+        <navLabel><text>Etcetera</text></navLabel>
+        <content src="titlepage.xhtml"/>
+    </navPoint>
+    <navPoint id="navPoint-2" playOrder="2">
+        <navLabel><text>Etcetera</text></navLabel>
+        <content src="short_story.xhtml"/>
+    </navPoint>
+  </navMap>
+\end{lstlisting}
+
+The \texttt{navPoints} can be nested, resulting in 'subsections'.
+
+\subsection{EBook}
+This class (located in \texttt{webook/webook.py} contains all the logic needed
+to create an Ebook. It has one very important abstract method \texttt{scrape}
+that subclasses should implement scrape webpages.
+
+\subsubsection{High Level Overview}
+The EBook class does the following:
+
+\begin{itemize}
+	\item moves all files from \texttt{book\_templates/epub} to a temporary directory
+	\item creates datastructures to manipulate the \texttt{content.opf} and \texttt{toc.ncx} xml files
+	\item calls the abstract method crawl, 
+	\begin{itemize}
+		\item  This class should crawl the target site, and (if possible) set
+			\texttt{self.title}, \texttt{self.first\_name} and \texttt{self.last\_name} (of the author), and
+			\texttt{self.cover\_path} (to add a cover image).
+		\item for each book chapter/section/arch etc. created
+			\texttt{self.write\_html} needs to be called to write the chapter
+			to file, and \texttt{self.update} needs to be called to update the
+			\texttt{content.opf} and \texttt{toc.ncx} data structures.
+	\end{itemize}
+		\item dumps the updated \texttt{content.opf} and \texttt{toc.ncx} to disk. 
+		\item create a zip archive of the temporary directory and give it the \texttt{.epub} extension
+		\item delete the temporary directory
+\end{itemize}
+
+\subsubsection{Documenting Key Methods}
+\textbf{The constructor} (\texttt{\_\_init\_\_}) takes the following arguments:
+\begin{itemize}
+	\item \texttt{url}: The website to scrape
+	\item \texttt{epub\_file}: The filename of the ebook generated
+	\item \texttt{title}: The title of the book, if not None, it overwrites the scraped book name.
+	\item \texttt{workers}: The max number of concurrent TCP requests
+	\item \texttt{run}: Set to false if you want to create the python object without also creating the book right away, this is necessary if you want to add a status bar. 
+\end{itemize}
+
+The constructor initiates the following important objects
+\begin{itemize}
+	\item \texttt{output\_dir}: the path to the temporary folder, where the book will be build.
+	\item \texttt{toc}: An ElementTree (xml object), to facilitate manipulation of the \texttt{toc.ncx} (Table of Content xml file)
+	\item \texttt{toc\_dict}: A dictionary mapping that maps names (usually of chapters) to their table of content xml element, 
+	\item \texttt{content*} a set of instance variables for easy alteration of the \texttt{content.opf} xml file.
+\end{itemize}
 
 
-\texttt{page\_style.css} are small files that will not be touched by the code as they 
+\textbf{run}: This function is a generator, that \texttt{yield} the progress of
+the webscraping. When it is done scraping it updates the author name, title,
+and cover image. This is done after scraping is complete,
+because it assumes that the scraper will set these variables as it scrapes the
+webpages. Finally it calls \texttt{self.save(self.epub\_file)} create the ebook.
 
 
+            % self.update_author(self.first_name, self.last_name)
+% title
+% (\texttt{self.update\_title(self.title)}), which it assumes was scraped by
+% \texttt{self.scrape}. Then it adds a cover a cover image
+% (\texttt{self.update_title(self.title)}) which it again assumes was set by
+% scrape. Finally it saves the book (\texttt{self.save(self.epub_file)}).
 
+\textbf{save}: This method dumps the \texttt{toc} and \texttt{content} to disk, zip the temporary folder, and renames it to \texttt{epub\_file}, subsequently it deletes the temporary directory.
 
+\textbf{write\_html}: This method creates an html file corresponding to a section/chapter/etc. it takes 3 arguments:
+\begin{itemize}
+	\item \texttt{text} a string or Beautiful Soup tag that will be written to file.
+	\item \texttt{name}, this is the name of the file on disk (with no extension), but it is also the name used to referee to it's place in the TOC. 
+	\item \texttt{header} (optional): The heading, eg "Chapter 2" or "The boy who lived" or similiar, if None it will use \texttt{name} as \texttt{header}
+\end{itemize}
 
-`webook/webook.py` contains the heart of the project. It contains the class `EBook`
-which contains all the code necessary for creating an ebook. It has a fairly
-simple API, In order to make it work, one must subclass it and 'teach' it to
-parse your favorite websites. This is done by overwriting the abstract `parse` method in
-the child classes, and by calling `update` for each chapter/section of the
-book.
+\textbf{update}: This method makes the ebook "aware" that a new book segment
+have been added, by updating \texttt{content} and \texttt{toc}. In previous
+iterations of the tool this method was called by \texttt{write\_html}. However
+when I made the code asynchronous, such that multiple book chapters can be
+crawled and written concurrently I had to make this into it's own function, as
+you have to update the Table of Content in order!
 
-While it may sound very scary to subclass EBook, the parser for parsing
-`www.fanfiction.net/` (`FanFictionEBook`) is less than 30 lines of code. To
-read the code for inspiration, see `webook/modules/fanfiction.py`
+\subsection{FanFictionEBook}
+%TODO: this should be very short as the focus of the repport should be on the web stuff
+% though it is mainly web scraping...
+
+% While it may sound very scary to subclass EBook, the parser for parsing
+% `www.fanfiction.net/` (`FanFictionEBook`) is less than 30 lines of code. To
+% read the code for inspiration, see `webook/modules/fanfiction.py`
 
 
 \subsection{webserver}
-\subsection{webscraping}
-\subsection{modules}
+The webserver uses Flask as the backend, and JQuery + Bootstrap as the frontend. The expected path through the server is the following:
+\begin{itemize}
+	\item a request to '/' returns the index page \texttt{static/index.html}.
+		Where the user enters the url a to an E-Book, and selects a parser
+		(Only fanfiction.net is implemented as of writing).
+	\item When Submit is clicked. Javascript opens a stream to the server,
+		the "stream request" hands the url and parser to the back end.
+	\item the backend starts scraping the chapters, for each chapter downloaded
+		the progress is feed back to client, where it it is used to update the
+		progress bar.
+	\item When all chapters have been crawled The server saves the file to
+		disk, and sends the name of the file name back to trough the stream.
+	\item This prompts the client to close the stream, and make a new request
+		\texttt{/download\_ebook/<file-name>} to download the file.
+	\item The server cleans up all but the newest $processes\times2 + 5$ files.
+\end{itemize}
+
+\subsubsection{Frontend}
+To make the webpage beautiful and responsive I opted for bootstrap\ref{bootstrap} with the
+dark theme cyborg\ref{bootstrap_cyborg}. I wrote all the html by hand.
+\texttt{WTForms}\ref{wtforms} also looked very promising, as they are Python object that
+can be render into jinja templates seamlessly. They however adding another
+dependency seemed like overkill considering I only have 2 data carrying form
+elements!
+
+\subsubsection{Backend}
+Getting the status bar to work was challenging, because it required a large
+rewrites of the Ebook class, The first iteration of the Ebook class and it's
+subclass FanFictionEBook was written in such a way that they blocked the Python
+interpreter until the book was created. Which made the Status bar jump from 0\% strait
+to 100\%. This issue was solved by turning \texttt{Ebook.scrape}
+into a generator function. This generator is returned when you call
+\texttt{EBook.run()} as seen in line \ref{code:create-ebook-run}. The generator is
+advanced by calling \texttt{next} on it, either explicitly as seen in
+line \ref{code:create-ebook-next}, or implicitly by looping over it as in line
+\ref{code:create-ebook-for}.
+
+\begin{lstlisting}[language=python, escapeinside={(*}{*)}, basicstyle=\small]
+@app.route('/create_ebook/<parser>/<url>')
+def create_ebook(parser, url):
+    def generate(ebook_parser, tmp_file):
+		ebook_generator = ebook_parser.run() (*\label{code:create-ebook-run}*)
+		progress = next(ebook_generator) (*\label{code:create-ebook-next}*)
+        total = ebook_parser.total
+        yield f"data: {round(100 * progress / total)}\n\n"
+		for progress in ebook_generator: (*\label{code:create-ebook-for}*)
+            yield f"data: {round(100 * progress / total)}\n\n"
+        tmp_file = os.path.basename(tmp_file)
+        yield f"data: file-name: {tmp_file}\n\n"
+	...
+    return Response(generate(ebook_parser, tmp_file), mimetype='text/event-stream')
+\end{lstlisting}
+
+
+% \subsection{webscraping}
+% \subsection{modules}
 
 %-------------------------------------------------------------------------------
 % CONCLUSION
@@ -432,3 +589,6 @@ read the code for inspiration, see `webook/modules/fanfiction.py`
 % java_htmlunit http://htmlunit.sourceforge.net/
 % worm https://parahumans.wordpress.com/
 % flask http://flask.pocoo.org/ 
+% bootstrap
+% bootstrap_cyborg https://bootswatch.com/cyborg/
+% wtforms https://wtforms.readthedocs.io/en/latest/
