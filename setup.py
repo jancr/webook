@@ -7,13 +7,17 @@ from setuptools import setup
 
 # dependencies
 install_requires=[
-    #  'lxml,'
+    'lxml,'
     'beautifulsoup4', 
-    'flask'
+    'tqdm',  # optional
+    'flask'  # optional
 ]
 
 if '--no-flask' in sys.argv:
     install_requires.pop('flask')
+
+if '--no-tqdm' in sys.argv:
+    install_requires.pop('tqdm')
 
 def readme():
     #  with open('README.rst') as f:

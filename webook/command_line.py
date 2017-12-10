@@ -3,9 +3,6 @@
 import sys
 import argparse
 
-# 3rd party
-import tqdm
-
 # local
 from webook.modules.fanfiction import FanFictionEBook
 from webook.modules.wordpress import WordPressEBook
@@ -20,10 +17,17 @@ def scrape_to_book(url, book_file, title):
     ebook_generator = ebook.run()
     next(ebook_generator)
     # and then iterate over the rest and update progress bar
-    with tqdm.tqdm(total=ebook.total) as progress_bar:
-        progress_bar.update(1)
-        for progress in ebook_generator:
+    try:
+        import tqdm  
+        with tqdm.tqdm(total=ebook.total) as progress_bar:
             progress_bar.update(1)
+            for progress in ebook_generator:
+                progress_bar.update(1)
+    except ModuleNotFoundError:
+        print(file=sys.stderr)
+        for progress in ebook_generator:
+            print(f"\rdownloaded: {progress}/{ebook.total}", end='', file=sys.stderr)
+
 
 def run():
     example_url = "https://www.fanfiction.net/s/9658524/1/Branches-on-the-Tree-of-Time"

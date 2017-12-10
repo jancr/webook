@@ -10,6 +10,20 @@ cd webook
 pip3 install setup.py
 ```
 
+If you only want to use the tool from the command line:
+
+```
+pip3 install setup.py --no-flask
+
+```
+
+If you only want to use the web server interface:
+
+```
+pip3 install setup.py --no-tqdm
+```
+
+
 ## Dependencies ##
 Dependencies are installed by setup.py
 
