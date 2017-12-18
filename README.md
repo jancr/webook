@@ -14,7 +14,6 @@ If you only want to use the tool from the command line:
 
 ```
 pip3 install setup.py --no-flask
-
 ```
 
 If you only want to use the web server interface:
@@ -25,18 +24,28 @@ pip3 install setup.py --no-tqdm
 
 
 ## Dependencies ##
-Dependencies are installed by setup.py
+Dependencies are installed by setup.py, but if you want to install them manually:
 
 **[Python 3](https://www.python.org/downloads/) and packages**
 
-**BeautifullSoap**
+**lxml (requred)**
+
+* `pip install lxml`
+
+**BeautifullSoap (requred)**
 
    * `pip3 install beautifulsoup4`
 
 
-**Flask**
+**Flask (optional)**
 
 * `pip3 install flask`
+
+
+**tqdm (optional)**
+
+* `pip3 install qtdm`
+
 
 ## How To Use ##
 
@@ -127,12 +136,5 @@ read the code for inspiration, see `webook/modules/fanfiction.py`
 
 * look under `webook/modules` for inspiration to create your own parsers
 * `book_templates/epup` and `webook/webook.py` contains all the secret sauce.
-
-
-
-
-
-
-
 
 

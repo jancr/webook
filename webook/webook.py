@@ -17,18 +17,18 @@ from distutils.dir_util import copy_tree
 import bs4
 from bs4 import BeautifulSoup as Soup
 
-################################################################################
+############################################################
 # Globals
-################################################################################
+############################################################
 # WEBSITE = 'http://shinsekai.cadet-nine.org/'
 ROOT = pjoin(os.path.split(os.path.abspath(__file__))[0], '..')
 soup = Soup('', 'lxml')
 TEMPLATE_FOLDER = pjoin(ROOT, "book_templates/epub")
 
 
-################################################################################
+############################################################
 # EBook Class
-################################################################################
+############################################################
 class EBook:
     TEMPLATE_FOLDER = pjoin(ROOT, "book_templates/epub")
     """An ebook basically consists of a bunsh of html files usually one pr chapter
