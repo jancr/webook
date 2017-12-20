@@ -85,7 +85,7 @@ class EBook:
         if self.input_title:  # user specified title > scraped title
             self.title = self.input_title
         self.update_title(self.title)
-        self.add_cover(self.cover_path)
+        self.add_cover(self.cover)
         self.save(self.epub_file)
 
     def update_title(self, title):
@@ -102,11 +102,14 @@ class EBook:
             creator.string = f"{first_name} {last_name}"
             creator.attrs['opf:file-as'] = f"{first_name}, {last_name}"
 
-    def add_cover(self, cover_path):
+    def add_cover(self, cover_req):
+        """cover_req can be either a url or a request"""
         # TODO jpg hardcoded, should alter files accordingly if not jpg!
-        if cover_path is None:
-            cover_path = 'https://vignette.wikia.nocookie.net/uncyclopedia/images/c/cf/Trollface.jpg'
-        urllib.request.urlretrieve(cover_path, self.get_path('cover.jpg'))
+        if cover_req is None:
+            cover_req = 'https://vignette.wikia.nocookie.net/uncyclopedia/images/c/cf/Trollface.jpg'
+        with open(self.get_path('cover.jpg'), 'wb') as cover_file:
+            data = urllib.request.urlopen(cover_req).read()
+            cover_file.write(data)
 
     def save(self, epup_file):
         open(self.content_path, 'w').write(self.content.prettify())
@@ -137,7 +140,7 @@ class EBook:
             _tag.string = text
         target.append(_tag)
 
-    def _update(self, name, heading, parent=None):
+    def update(self, name, heading, parent=None):
         """ updates content and table of content, needs to be called by scrape
         to add chapters, sections ect. to the Table of Content.
         If a section should be nested below another section the 'name' from
@@ -170,7 +173,7 @@ class EBook:
 
         if header is None:
             header = name
-        chapter_file = open(self.get_path(f'{file_name}.xhtml'), 'w')
+        html_file = open(self.get_path(f'{name}.xhtml'), 'w')
 
         chapter_soup = Soup(open(self.get_path('page_template.xhtml')), 'lxml')
         body_tag = chapter_soup.find('body')
@@ -184,7 +187,7 @@ class EBook:
             body_tag.append(text)
         else:
             raise ValueError("chapter_tag must be either string, bs4.element.Tag or bs4.element.ResultSet")
-        chapter_file.write(chapter_soup.prettify())
+        html_file.write(chapter_soup.prettify())
     
     def scrape(self, url, workers):
         """

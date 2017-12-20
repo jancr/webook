@@ -2,6 +2,17 @@
 *.pyc
 *.pdf
 *.epub
+*.pdf
+
+# latex
+*.aux
+*.toc
+*.out
+*.log
+*.bcf
+*.bbl
+*.sty
+*blx.bib
 
 /dist/
 

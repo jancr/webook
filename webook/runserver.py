@@ -77,7 +77,7 @@ def download_ebook(file_name):
         cleanup()
         return response
 
-    tmp_file_name = pjoin(TMP_DIR, file_name)
+    tmp_file_name = pjoin(TMP_DIR, os.path.basename(file_name))
 
     return send_file(tmp_file_name, mimetype='application/epub+zip',
                      attachment_filename="book.epub", as_attachment=True)
@@ -108,11 +108,12 @@ def create_ebook(parser, url):
     return Response(generate(ebook_parser, tmp_file), mimetype='text/event-stream')
 
 
-def runserver(debugging=False, processes=4):
+def runserver(debugging=False, processes=1):
+    # TODO: if I deploy the webserver processes should be equal to n_cpus/
     global DEBUGGING
     global PROCESSES
-    if debugging:
-        processes=1
+    #  if debugging:
+        #  processes=1
     PROCESSES=processes
     DEBUGGING = debugging
     app.run(debug=debugging, host='0.0.0.0', port=5555, processes=processes)

@@ -7,7 +7,7 @@ from setuptools import setup
 
 # dependencies
 install_requires=[
-    'lxml,'
+    'lxml',
     'beautifulsoup4', 
     'tqdm',  # optional
     'flask'  # optional
@@ -27,12 +27,9 @@ def readme():
 setup(name='webook',
       packages=['webook'],
       # Update the version number for new releases
-      version='0.0.1',
-      # The name of your scipt, and also the command you'll be using for calling it
-      
+      version='0.1.0',
       install_requires=install_requires,
       # scripts
-      #scripts=['scrape_ebook.py'],
       entry_points = {
           'console_scripts': ['webook=webook.command_line:run']
       },
@@ -44,7 +41,7 @@ setup(name='webook',
       classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
       ],
       include_package_data=True,
       zip_safe=False

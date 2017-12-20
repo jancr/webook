@@ -13,17 +13,17 @@ from bs4 import BeautifulSoup as Soup
 # local imports
 from ..webook import EBook
 
-class FanFictionEBook(EBook):
 
+class FanFictionEBook(EBook):
     def scrape(self, url, workers):
         book_id = re.search('fanfiction\.net\/s\/(\d+)\/', url).groups()[0]
         page = Soup(urllib.request.urlopen(url), 'lxml')
 
-        # add cover and title
+        # CDN blocks referes != fanfiction.net :(
+        cover_path = 'https:{}'.format(page.find('img').attrs['data-original'])
+        self.cover = urllib.request.Request(cover_path, headers={'referer': url})
+
         title_page = page.find('div', {'id': 'profile_top'})
-        # TODO: find out how not to be blocked by the CDN :(
-        # self.cover_path = 'https:{}'.format(title_page.find('img').attrs['src'])
-        # self.cover_path = 'https:{}'.format(page.find('img').attrs['data-original'])
         self.title = title_page.find('b').text
         self.first_name = title_page.find('a').text
 

@@ -58,11 +58,34 @@
 %-------------------------------------------------------------------------------
 % TITLE PAGE
 %-------------------------------------------------------------------------------
-\title{WeBook: scrape Webpage to Ebook}
-\author{Jan Christian Refsgaard}
-\date{December 20, 2017}    % type date between braces
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+        \Huge
+        \textbf{WeBook}
+        
+        \vspace{0.5cm}
+        \LARGE
+        Convert a Webpage to an E-book
+        
+        \vspace{1.5cm}
+        \textbf{By: Jan Christian Refsgaard}
+        
+        \vfill
+        \vspace{0.8cm}
+        
+        \Large
+        Student ID: S124517 \\
+        Subject: 62T04 Web Technologies E17 \\
+        Teacher: Birger Andersen, birad@dtu.dk \\
+        Date: 20/12-2017 \\
+        Key strokes: 30157\\
+        % pbpaste |tr -d '[:space:] ' | wc -c
+        
+    \end{center}
+\end{titlepage}
 
-\maketitle
+% \maketitle
 
 %-------------------------------------------------------------------------------
 % TABLE OF CONTENTS
@@ -74,18 +97,17 @@
 %-------------------------------------------------------------------------------
 \chapter*{Abbreviations}
 \begin{tabular}{ l l }
-	% TODO: remember to sort them !!!!
-	% TODO: remember to sort them !!!!
-	\textbf{URI}   & \textbf{U}niform \textbf{R}esource \textbf{I}dentifier \\
-	\textbf{URL}   & \textbf{U}niform \textbf{R}esource \textbf{L}ocator \\
+	\textbf{CDN}   & \textbf{C}ontent \textbf{D}istribution \textbf{N}etwork  \\
 	\textbf{EPUB}  & \textbf{E}lectronic \textbf{PUB}lication  \\
 	\textbf{HTML}  & \textbf{H}yper\textbf{T}ext \textbf{M}arkup \textbf{l}anguage \\
-	\textbf{XHTML} & \textbf{E}xtensible \textbf{H}yper\textbf{T}ext 
-					 \textbf{M}arkup \textbf{l}anguage \\
 	\textbf{HTML5} & \textbf{H}yper\textbf{T}ext \textbf{M}arkup \textbf{l}anguage 
 					 version 5 \\
 	\textbf{OEBPS} & \textbf{O}pen \textbf{EB}ook \textbf{P}ublication \textbf{S}tructure \\
 	\textbf{TOC}   & \textbf{T}able \textbf{O}f \textbf{C}ontent  \\
+	\textbf{URI}   & \textbf{U}niform \textbf{R}esource \textbf{I}dentifier \\
+	\textbf{URL}   & \textbf{U}niform \textbf{R}esource \textbf{L}ocator \\
+    \textbf{WSGI}  & \textbf{W}eb \textbf{S}erver \textbf{G}ateway \textbf{I}nterface \\
+	\textbf{XHTML} & \textbf{E}xtensible \textbf{H}yper\textbf{T}ext \\
 \end{tabular}
 
 %-------------------------------------------------------------------------------
@@ -289,8 +311,8 @@ web pages. It builds upon two other python packages. 1. Werkzeug, a WSGI (Web
 Server Gateway Interface). 2) Jinja 2, a templating language that allows you to
 mix python and html, much like php.
 
-Much like python, hello world in Flask is also surprisingly few lines, as can
-be seen in Listing \ref{lst:flask-hello-world}
+Much like python, hello world in Flask (see Listing
+\ref{lst:flask-hello-world}) is also surprisingly few lines. 
 
 \begin{minipage}{\linewidth}
 \begin{lstlisting}[language=python, label={lst:flask-hello-world}, 
@@ -357,7 +379,7 @@ def users():
 \end{lstlisting}
 \end{minipage}
 
-\subsection{Concurrent Programming and parallelism}
+\subsection{Concurrent Programming and Parallelism}
 \label{sec:concurrent_programming}
 Concurrent programming and parallelism are two different strategies for
 speeding up code. An example of parallelism is multi threading or
@@ -415,7 +437,7 @@ The second way to use WeBook is by interacting with its webserver:
     \item click submit and wait for your book
 \end{itemize}
 
-\subsection{EBook Generator}
+\subsection{E-Book Generator}
 The core of The e-book is the class \texttt{EBook} where all the code to create
 an e-book resides. It is written as a class who's subclasses are tasked with
 the scraping of specific websites. For more information, the source code for
@@ -427,15 +449,16 @@ The subclasses of \texttt{EBook} are tasked with doing the scraping of
 web pages, and turning the scraped text into an e-book using the inherited
 methods from it's parent. Currently only 1 subclass exists
 (\texttt{FanfictionEBook} in \texttt{webook/modules/fanfiction.py}), but as it
-is only 31 lines of code, it should not be to big of a burden to create more.
+is only 33 lines of code, it should not be to big of a burden to create more.
 For more information please read section \ref{sec:FanFictionEBook}
 
 \section{Install Instructions}
 First Install Python (\url{https://www.python.org/downloads/})
 
-Then clone WeBooks git repository and run the installer with \texttt{pip} the
-python package installer, as shown in Listing \ref{lst:install}. This will
-install all the dependencies for WeBook as well as webook itself. 
+Then clone WeBooks git repository and run the installer using \texttt{pip} (the
+python package installer), thise commands are shown in Listing
+\ref{lst:install}. This will install all the dependencies for WeBook as well as
+webook itself. 
 
 \begin{lstlisting}[language=bash, label={lst:install},
                    caption={WeBook install instructions}]
@@ -638,7 +661,7 @@ Organisationally \texttt{FanfictionEBook} is found under
 websites should each live in it's own file to encourage other tech savvy to
 develop their own scraper, while piggy backing on \texttt{EBook} to perform all
 the heavy lifting of creating an ebook. Because all the heavy lifting is done
-by the parent class, \texttt{FanFictionEBook} is only 31 lines of code
+by the parent class, \texttt{FanFictionEBook} is only 33 lines of code
 (ignoring blank lines). 
 
 \begin{minipage}{\linewidth}
@@ -686,7 +709,7 @@ the \texttt{TreadPoolExecutor} object. The code in Listing \ref{lst:ff-parse} sh
 		\texttt{scrape}.  This is utilized to get the status bar to work. Focus
 		is given back to scrap calling \texttt{next} on it. See Section
 		\ref{sec:backend} and the accompanying code snippet in Listing
-		\ref{lst:create-ebook} 
+		\ref{lst:create_ebook} 
 \end{itemize}
 
 \subsection{Webserver}
@@ -747,6 +770,52 @@ def create_ebook(parser, url):
 \end{lstlisting}
 \end{minipage}
 
+\section{Testing}
+As the tool is still very immature, I have not had the time to thoroughly test it.
+The Core consisting of \texttt{EBook} and \texttt{FanFictionEBook} have been well tested
+manually by trying to find places where they will fail. As an example Earlier
+versions \texttt{FanfictionEBook} would crash when encountering a short story, because short stories
+do not have a \texttt{<select>} tag pointing to the other chapters.
+
+The web interface is much less tested, and lacks input validation. Thus if the
+parser "WordPress sites" is chosen the server will crash. If an invalid URL is
+given, the server will also crash. 
+
+The site is in principle vulnerable to replay attacks, allowing the attacker
+to bypass the scraping and directly make a request for a previously generated
+book, which are stored in the \texttt{tmp} folder. However, if the server was
+to go live I would probably need cash the ~100 most popular books anyway, to
+lighten the server load.
+
+I do sanitise the file name, so a request for the file
+\texttt{../../../etc/passwd} will be truncated to \texttt{passwd}.  The server
+is very vulnerable to DOS attacks as the server performs many computations per
+request, and does not limit the number of requests per host.
+
+During my testing of WeBook 2 things have stumped me:
+\begin{enumerate}
+    \item If the Flask worker process crashes on the server, while a
+        \texttt{text/event-stream} is open, the browser will try to reestablish
+        connection, sending the same request again, effectively performing a
+        DOS attack against the server, as it will crash the worker again. If
+        JavaScript forgets to close the stream, the browser will likewise
+        assume the connection has crashed, resulting in a requests to the server
+        every 5 seconds. 
+    \begin{itemize}
+            \item In principle this also mean that WeBook risk downloading a book
+                multiple times, if the books server is slow, this could be
+                mitigated by having flask start a timer and resend the previous
+                progress if more than a few seconds have passed. 
+            \item Furthermore I should probably wrap the generator function
+                \texttt{scrape} in a \pyth{try}/\pyth{except} statement so the
+                web server, can close the stream when errors occur. 
+    \end{itemize}
+    \item The book cover images on \url{fanfiction.net} are distributed via a
+        CDN, thus to dodge a \texttt{403 Forbidden Error} I had to set the
+        request header \texttt{Referer: fanfiction.net}.
+\end{enumerate}
+
+
 %-------------------------------------------------------------------------------
 % CONCLUSION
 %-------------------------------------------------------------------------------
@@ -760,7 +829,7 @@ As every website is different a scraper has to be written for each one. Thus a
 lot of though has been put into making the API very simple such that writing
 scrapers is as simple as possible. The only modules written so fare is a scraper
 for \url{fanfiction.net} which is implemented in the class
-\texttt{FanFictionEBook}, this class is only 31 lines of code, which suggests
+\texttt{FanFictionEBook}, this class is only 33 lines of code, which suggests
 that writing parsers for other web pages is much simpler, than writing the
 parent class.
 
@@ -794,8 +863,17 @@ like the html id for the status bar, and the name of the first and last chapter
 in the status bar, id of the chapter title, and the id of the chapter text,
 etc. Whether this is feasible or not has yet to be determined, but it does not
 have to work perfect to supply a more pleasant reading experience than reading
-online I am optimistic :). 
+online. So a few false positives such as turning the about page into a chapter
+is probably acceptable behaviour. 
 
+\subsection{Tests and Validation}
+I have lots of experience with Unit testing using
+\texttt{pytest}\cite{py_pytest}, and would like to write tests for most of
+methods in \texttt{EBook} and \texttt{FanfictionEBook} to ensure that the core
+of the project is stable.  It would also like to add input validation to the
+web interface, and exception handling to the back end. Of course some
+integration and system test would also be nice, but that may be overkill for
+such a small project.
 %-------------------------------------------------------------------------------
 % Appendex
 %-------------------------------------------------------------------------------
