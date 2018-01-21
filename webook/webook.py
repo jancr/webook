@@ -1,5 +1,6 @@
 
 # core imports
+import re
 import os
 from os.path import join as pjoin
 import shutil
@@ -12,6 +13,7 @@ import argparse
 import tempfile
 import uuid
 from distutils.dir_util import copy_tree
+import subprocess
 
 # 3rd party imports
 import bs4
@@ -34,13 +36,13 @@ class EBook:
     """An ebook basically consists of a bunsh of html files usually one pr chapter
     and a table of content that describes the relationship between the chapters"""
 
-    def __init__(self, url, epub_file='book.epup', title=None, 
+    def __init__(self, url, out_file='book.epup', title=None, 
             workers=5, run=True):
         if not url.startswith('http'):
             url = f'http://{url}'
 
         self.url = url
-        self.epub_file = epub_file
+        self.out_file = out_file
         self.input_title = title
         self.workers = workers
 
@@ -86,7 +88,7 @@ class EBook:
             self.title = self.input_title
         self.update_title(self.title)
         self.add_cover(self.cover)
-        self.save(self.epub_file)
+        self.save(self.out_file)
 
     def update_title(self, title):
         self.toc.find(f'{{{self.ns}}}docTitle/{{{self.ns}}}text').text = title
@@ -111,22 +113,27 @@ class EBook:
             data = urllib.request.urlopen(cover_req).read()
             cover_file.write(data)
 
-    def save(self, epup_file):
+    def save(self, out_file):
+        out_file_name, out_file_ext = os.path.splitext(out_file)
+        epub_file = f'{out_file_name}.epub'
         open(self.content_path, 'w').write(self.content.prettify())
         # et_to_file(self.toc, self.toc_path)
         with open(self.toc_path, 'w') as toc_file:
-            toc_file.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n')
-            toc_file.write('<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\n')
-            toc_file.write('"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\n\n')
+            #  toc_file.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n')
+            #  toc_file.write('<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\n')
+            #  toc_file.write('"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\n\n')
             rough_string = ET.tostring(self.toc, encoding='unicode')
             rough_string = ''.join(map(str.strip, rough_string.split('\n')))
             toc_file.write(minidom.parseString(rough_string).toprettyxml("  "))
         os.unlink(self.get_path('page_template.xhtml'))
 
-        # zip output_folder and rename it tou epup_file
+        # zip output_folder and rename it to epup_file
         tmp_file_name = str(uuid.uuid4())[:10]
         shutil.make_archive(tmp_file_name, 'zip', self.output_dir)
-        os.rename(f'{tmp_file_name}.zip', epup_file)
+        os.rename(f'{tmp_file_name}.zip', epub_file)
+        # TODO: test this works!!!
+        if out_file_ext != '.epub':
+            self.change_ebook_format(epub_file, out_file)
         self.output_dir_obj.cleanup()  # remove temporary directory
 
     def get_path(self, *path):
@@ -196,4 +203,14 @@ class EBook:
         progrees
         """
         pass
+
+    @staticmethod
+    def change_ebook_format(epub_file, out_file, delete_epub=True):
+        # TODO: error checking!!
+        subprocess.call(('ebook-convert', epub_file, out_file), 
+                         stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        if delete_epub:
+            os.unlink(epub_file)
+
+
 

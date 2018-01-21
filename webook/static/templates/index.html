@@ -36,14 +36,24 @@
                           {% endfor %}
                       </select>
                 </div>
-                <!-- <div class="form-group col-md-4"> -->
-                    <!-- <label for="file_name">File Name</label> -->
-                    <!-- <input class="form-control" id="file_name" name="file_name" placeholder="file_name"> -->
-                    <!-- <small id="file_explanation" name="file_explanation" class="form-text text-muted"> -->
-                        <!-- File name without extension, 'time' will result in a file called time.epub -->
-                    <!-- </small> -->
-                <!-- </div> -->
-                <!-- </span> -->
+            </div>
+            <div class="row">
+                <div class="form-group col-md-8">
+                    <label for="file_name">File Name</label>
+                    <input class="form-control" id="file_name" name="file_name" placeholder="File name of the ebook">
+                    <small id="file_explanation" name="file_explanation" class="form-text text-muted">
+                        File name without extension, 'time' will result in a file called time.epub
+                    </small>
+                </div>
+                <div class="form-group col-md-4">
+                      <label for="ebook_format"></label>
+                      <select class="form-control" id="ebook_format" name="ebook_format">
+                          {% for ebook_format in ebook_formats %}
+                          <option value="{{loop.index0}}">{{ebook_format}}</option>
+                          {% endfor %}
+                      </select>
+                </div>
+                </span>
             </div>
             <div class="row">
                 <div class='col-md-6'>

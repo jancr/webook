@@ -4,12 +4,12 @@
 		<dc:language>en</dc:language>
 		<dc:title></dc:title>
 		<dc:creator opf:file-as="Last_Name, First_Name" opf:role="aut">First_Name Last_Name</dc:creator>
-		<meta name="cover" content="cover.jpg"/>
 	</metadata>
 	<manifest>
 		<item href="titlepage.xhtml" id="titlepage" media-type="application/xhtml+xml"/>
-		<item href="page_styles.css" id="page_css" media-type="text/css"/>
+		<item href="page_style.css" id="page_css" media-type="text/css"/>
 		<item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml"/>
+        <ietm href="cover.jpg" id="cover_inage" media-type="image/jpeg"/>
 	</manifest>
 	<spine toc="ncx">
 		<itemref idref="titlepage"/>
