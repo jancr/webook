@@ -19,6 +19,29 @@ import subprocess
 import bs4
 from bs4 import BeautifulSoup as Soup
 
+
+############################################################
+# helper functions
+############################################################
+def which(program):
+    """works like unix which"""
+    # stolen from https://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
+    import os
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
 ############################################################
 # Globals
 ############################################################
@@ -204,13 +227,26 @@ class EBook:
         """
         pass
 
-    @staticmethod
-    def change_ebook_format(epub_file, out_file, delete_epub=True):
-        # TODO: error checking!!
-        subprocess.call(('ebook-convert', epub_file, out_file), 
+    def change_ebook_format(self, epub_file, out_file, delete_epub=True):
+        if not hasattr(self, 'ebook_convert'):
+            self.ebook_convert = self.__get_ebook_convert_path()
+        subprocess.call((self.ebook_convert, epub_file, out_file), 
                          stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         if delete_epub:
             os.unlink(epub_file)
+
+    @staticmethod
+    def __get_ebook_convert_path():
+        ebook_convert = which('ebook-convert')
+        if ebook_convert is None:
+            import platform
+            if platform.system() == 'Darwin':
+                ebook_convert = "/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-convert"
+            #  elif platform.system() == "Windows":
+            #  elif platform.system() == "Linux":
+            if not os.path.exists(ebook_convert):
+                EnviromentError("ebook-convert is not in your path")
+        return ebook_convert
 
 
 
