@@ -7,6 +7,7 @@ import argparse
 from webook.modules.fanfiction import FanFictionEBook
 from webook.modules.wordpress import WordPressEBook
 
+
 def scrape_to_book(url, book_file, title):
     if 'fanfiction.net' in url:
         ebook = FanFictionEBook(url, book_file, title, run=False)
@@ -18,7 +19,7 @@ def scrape_to_book(url, book_file, title):
     next(ebook_generator)
     # and then iterate over the rest and update progress bar
     try:
-        import tqdm  
+        import tqdm
         with tqdm.tqdm(total=ebook.total) as progress_bar:
             progress_bar.update(1)
             for progress in ebook_generator:
@@ -38,8 +39,8 @@ def run():
         parser = argparse.ArgumentParser()
         parser.add_argument('url', help=f'url to where the book is located, fx {example_url}')
         parser.add_argument('book_file', help='the file name of final book', default='book.epub')
-        parser.add_argument('--title', default=None, 
-                help='The title of the book, default name is scraped from the website')
+        parser.add_argument('--title', default=None,
+                            help='The title of the book, default name is scraped from the website')
         parser.set_defaults(func=scrape_to_book)
         args = parser.parse_args()
         args.func(args.url, args.book_file, args.title)

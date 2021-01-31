@@ -147,6 +147,7 @@ def create_ebook(parser, url, ext_index):
             yield f"data: {round(100 * progress / total)}\n\n"
         tmp_file = os.path.basename(tmp_file)
         yield f"data: file-name: {tmp_file}\n\n"
+        #  yield f"data: 0\n\n"  # reset statusbar
 
     book_parser = base64.b64decode(parser).decode('utf-8')
     book_url = base64.b64decode(url).decode('utf-8')
@@ -163,12 +164,12 @@ def create_ebook(parser, url, ext_index):
     return Response(generate(ebook_parser, tmp_file), mimetype='text/event-stream')
 
 
-def runserver(debugging=False, processes=1):
+def runserver(debugging=False, processes=4):
     # TODO: if I deploy the webserver processes should be equal to n_cpus/
     global DEBUGGING
     global PROCESSES
-    #  if debugging:
-        #  processes=1
+    if debugging:
+        processes=1
     PROCESSES = processes
     DEBUGGING = debugging
     app.run(debug=debugging, host='0.0.0.0', port=5555, processes=processes)
